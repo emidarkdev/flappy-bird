@@ -4,6 +4,7 @@ let ctx = canvas.getContext('2d');
 let sprite = new Image();
 sprite.src = './img/sprite.png';
 
+
 let frame = 0;
 let state = {
     current: 0,
@@ -12,6 +13,8 @@ let state = {
     over: 2
 }
 let DEGREE = Math.PI / 100;
+
+
 
 
 
@@ -34,9 +37,19 @@ let fg = {
     h: 112,
     x: 0,
     y: canvas.height - 112,
+    dx : 2,
     draw: function () {
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x + this.w, this.y, this.w, this.h);
+    },
+    update : function(){
+        if (state.current == state.game) {
+            if(this.x <= -112){
+                this.x =0
+            }else{
+                this.x -= this.dx
+            }
+        }
     }
 }
 let bird = {
@@ -119,6 +132,11 @@ let gameOver = {
         state.current == state.over && ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
     }
 }
+
+
+
+
+
 let draw = () => {
     ctx.fillStyle = "#70c5ce";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -131,7 +149,8 @@ let draw = () => {
 }
 
 let update = () => {
-    bird.update()
+    bird.update(),
+    fg.update();
 }
 
 let loop = () => {
