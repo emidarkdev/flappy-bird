@@ -37,16 +37,16 @@ let fg = {
     h: 112,
     x: 0,
     y: canvas.height - 112,
-    dx : 2,
+    dx: 2,
     draw: function () {
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x + this.w, this.y, this.w, this.h);
     },
-    update : function(){
+    update: function () {
         if (state.current == state.game) {
-            if(this.x <= -112){
-                this.x =0
-            }else{
+            if (this.x <= -112) {
+                this.x = 0
+            } else {
                 this.x -= this.dx
             }
         }
@@ -103,7 +103,7 @@ let bird = {
                 } else {
                     this.rotation = -25 * DEGREE;
                 }
-            }else{
+            } else {
                 this.rotation = 50 * DEGREE;
                 this.frame = 1;
             }
@@ -132,7 +132,50 @@ let gameOver = {
         state.current == state.over && ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
     }
 }
+let pipes = {
+    position: [],
 
+    top: {
+        sX: 553,
+        sY: 0
+    },
+    bottom: {
+        sX: 502,
+        sY: 0
+    },
+
+    w: 53,
+    h: 400,
+    gap: 85,
+    maxYPos: -150,
+    dx: 2,
+
+    draw: function () {
+        if (state.current != state.game) return;
+        for (let i = 0; i < this.position.length; i++) {
+            const pipe = this.position[i];
+            let p_top_posY = pipe.y;
+            let p_bottom_posY = pipe.y + this.h + this.gap;
+            ctx.drawImage(sprite, this.top.sX, this.top.sY, this.w, this.h, pipe.x, p_top_posY, this.w, this.h);
+            ctx.drawImage(sprite, this.bottom.sX, this.bottom.sY, this.w, this.h, pipe.x, p_bottom_posY, this.w, this.h);
+        }
+    },
+
+    update: function () {
+        if (state.current != state.game) return;
+        if (frame % 100 == 0) {
+            this.position.push({
+                x: canvas.width,
+                y: this.maxYPos * (Math.random() + 1)
+            })
+        }
+        for (let i = 0; i < this.position.length; i++) {
+            const pipe = this.position[i];
+            pipe.x -= this.dx;
+        }
+    }
+
+}
 
 
 
@@ -142,6 +185,7 @@ let draw = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     bg.draw();
+    pipes.draw();
     fg.draw();
     bird.draw();
     getReady.draw();
@@ -150,7 +194,9 @@ let draw = () => {
 
 let update = () => {
     bird.update(),
-    fg.update();
+        fg.update();
+    pipes.update();
+
 }
 
 let loop = () => {
