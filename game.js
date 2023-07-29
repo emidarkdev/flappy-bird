@@ -4,6 +4,17 @@ let ctx = canvas.getContext('2d');
 let sprite = new Image();
 sprite.src = './img/sprite.png';
 
+let die = new Audio();
+die.src = './audio/sfx_die.wav';
+let flap = new Audio();
+flap.src = './audio/sfx_flap.wav';
+let hit = new Audio();
+hit.src = './audio/sfx_hit.wav';
+let swooshing = new Audio();
+swooshing.src = './audio/sfx_swooshing.wav';
+let point = new Audio();
+point.src = './audio/sfx_point.wav';
+
 
 let frame = 0;
 let state = {
@@ -15,7 +26,28 @@ let state = {
 let DEGREE = Math.PI / 100;
 
 
-
+let score = {
+    best: parseInt(localStorage.getItem('best')) || 0,
+    value: 0,
+    draw: function () {
+        if (state.current == state.game) {
+            ctx.lineWidth = 2;
+            ctx.font = "35px Teko";
+            ctx.fillText(this.value, canvas.width / 2.1, 50);
+            ctx.strokeText(this.value, canvas.width / 2.1, 50);
+        } else {
+            if (state.current == state.over) {
+                ctx.lineWidth = 2;
+                ctx.font = "30px Teko";
+                ctx.fillStyle = 'transparent'
+                ctx.fillText(this.value, 225, 186);
+                ctx.strokeText(this.value, 225, 186);
+                ctx.fillText(this.best, 225, 228);
+                ctx.strokeText(this.best, 225, 228);
+            }
+        }
+    }
+}
 let bg = {
     sX: 0,
     sY: 0,
@@ -76,7 +108,7 @@ let bird = {
         ctx.restore();
     },
     flap: function () {
-        this.speed = -this.jump
+        this.speed = -this.jump;
     },
     update: function () {
         let period = state.current == state.game ? 5 : 10;
@@ -93,13 +125,17 @@ let bird = {
             this.y += this.speed;
             if (this.y + this.h / 2 >= canvas.height - fg.h) {
                 this.y = (canvas.height - fg.h) - this.h / 2;
-                state.current = state.over;
+                if (state.current == state.game) {
+                    die.play();
+                    state.current = state.over;
+                }
             }
             if (this.speed > this.jump) {
                 this.rotation = 50 * DEGREE;
             } else {
                 if (state.current == state.game) {
                     this.rotation = -25 * DEGREE
+                    
                 };
             }
 
@@ -175,6 +211,7 @@ let pipes = {
                 bird.y - bird.radius < pipe.y + this.h
             ) {
                 state.current = state.over;
+                hit.play();
             }
             if (
                 bird.x + bird.radius > pipe.x &&
@@ -183,8 +220,13 @@ let pipes = {
                 bird.y - bird.radius < p_bottom_posY + this.h
             ) {
                 state.current = state.over;
+                hit.play();
             }
-
+            if (pipe.x + this.w < 0) {
+                this.position.shift();
+                score.value++;
+                point.play();
+            }
             pipe.x -= this.dx;
         }
     }
@@ -204,6 +246,7 @@ let draw = () => {
     bird.draw();
     getReady.draw();
     gameOver.draw();
+    score.draw()
 }
 
 let update = () => {
@@ -230,12 +273,19 @@ document.addEventListener('click', e => {
         case state.ready:
             bird.speed = 0;
             state.current = state.game;
+            swooshing.play();
             break;
         case state.game:
             bird.flap();
+            flap.play();
             break;
         case state.over:
             pipes.position = [];
+            if (score.value > score.best) {
+                score.best = score.value;
+                localStorage.setItem('best', score.best);
+            }
+            score.value = 0;
             state.current = state.ready;
             break;
         default:
