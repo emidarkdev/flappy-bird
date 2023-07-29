@@ -16,8 +16,6 @@ let DEGREE = Math.PI / 100;
 
 
 
-
-
 let bg = {
     sX: 0,
     sY: 0,
@@ -67,6 +65,7 @@ let bird = {
     speed: 0,
     gravity: .25,
     jump: 4.2,
+    radius: 12,
     rotation: 0,
     draw: function () {
         let bird = this.animation[this.frame];
@@ -90,23 +89,20 @@ let bird = {
             this.y = 150;
             this.rotation = 0 * DEGREE;
         } else {
-            if (state.current == state.game) {
-                this.speed += this.gravity;
-                this.y += this.speed;
-                if (this.y + this.h / 2 >= canvas.height - fg.h) {
-                    this.y = (canvas.height - fg.h) - this.h / 2;
-                    state.current = state.over,
-                        this.speed = 0;
-                }
-                if (this.speed > this.jump) {
-                    this.rotation = 50 * DEGREE;
-                } else {
-                    this.rotation = -25 * DEGREE;
-                }
-            } else {
-                this.rotation = 50 * DEGREE;
-                this.frame = 1;
+            this.speed += this.gravity;
+            this.y += this.speed;
+            if (this.y + this.h / 2 >= canvas.height - fg.h) {
+                this.y = (canvas.height - fg.h) - this.h / 2;
+                state.current = state.over;
             }
+            if (this.speed > this.jump) {
+                this.rotation = 50 * DEGREE;
+            } else {
+                if (state.current == state.game) {
+                    this.rotation = -25 * DEGREE
+                };
+            }
+
         }
     }
 }
@@ -151,7 +147,6 @@ let pipes = {
     dx: 2,
 
     draw: function () {
-        if (state.current != state.game) return;
         for (let i = 0; i < this.position.length; i++) {
             const pipe = this.position[i];
             let p_top_posY = pipe.y;
@@ -160,6 +155,7 @@ let pipes = {
             ctx.drawImage(sprite, this.bottom.sX, this.bottom.sY, this.w, this.h, pipe.x, p_bottom_posY, this.w, this.h);
         }
     },
+
 
     update: function () {
         if (state.current != state.game) return;
@@ -171,6 +167,24 @@ let pipes = {
         }
         for (let i = 0; i < this.position.length; i++) {
             const pipe = this.position[i];
+            let p_bottom_posY = pipe.y + this.h + this.gap;
+            if (
+                bird.x + bird.radius > pipe.x &&
+                bird.x - bird.radius < pipe.x + this.w &&
+                bird.y + bird.radius > pipe.y &&
+                bird.y - bird.radius < pipe.y + this.h
+            ) {
+                state.current = state.over;
+            }
+            if (
+                bird.x + bird.radius > pipe.x &&
+                bird.x - bird.radius < pipe.x + this.w &&
+                bird.y + bird.radius > p_bottom_posY &&
+                bird.y - bird.radius < p_bottom_posY + this.h
+            ) {
+                state.current = state.over;
+            }
+
             pipe.x -= this.dx;
         }
     }
@@ -214,12 +228,14 @@ loop()
 document.addEventListener('click', e => {
     switch (state.current) {
         case state.ready:
+            bird.speed = 0;
             state.current = state.game;
             break;
         case state.game:
             bird.flap();
             break;
         case state.over:
+            pipes.position = [];
             state.current = state.ready;
             break;
         default:
